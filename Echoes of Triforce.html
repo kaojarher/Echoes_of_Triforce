@@ -1,0 +1,1455 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>三角神力 Online：無盡深淵 (FC × 曠野之息配樂版)</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #111;
+            color: #eee;
+            font-family: 'Courier New', Courier, 'Microsoft JhengHei', monospace;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+            overflow-y: auto;
+            touch-action: none;
+            padding-bottom: 200px; 
+        }
+
+        #mobile-tabs {
+            display: none;
+            width: 100%;
+            max-width: 320px;
+            margin-top: 10px;
+            gap: 5px;
+            padding: 0 10px;
+            box-sizing: border-box;
+        }
+
+        .tab-btn {
+            flex: 1;
+            background-color: #222;
+            border: 2px solid #555;
+            color: #aaa;
+            padding: 10px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 6px 6px 0 0;
+            text-align: center;
+        }
+
+        .tab-btn.active {
+            background-color: rgba(20, 20, 20, 0.95);
+            border-color: #ffcc00;
+            color: #ffcc00;
+            border-bottom: 2px solid rgba(20, 20, 20, 0.95);
+        }
+
+        #game-layout {
+            display: flex;
+            gap: 15px;
+            max-width: 98vw;
+            margin-top: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        #left-zone {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        #game-container {
+            position: relative;
+            background-color: #000;
+            border: 4px solid #ffd700;
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.3);
+        }
+
+        #gameCanvas {
+            display: block;
+            max-width: 100%;
+            height: auto;
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .ui-text {
+            font-size: 0.85rem;
+            text-shadow: 1px 1px 0 #000;
+            background-color: rgba(0, 0, 0, 0.85);
+            padding: 6px 10px;
+            border: 1px solid #ffcc00;
+            border-radius: 4px;
+            pointer-events: auto;
+        }
+
+        /* 聲音開關按鈕樣式 */
+        #audio-toggle-btn {
+            cursor: pointer;
+            font-weight: bold;
+            color: #ffcc00;
+            border-color: #ffcc00;
+        }
+
+        #chat-container {
+            width: 296px; 
+            height: 95px;
+            background-color: rgba(0, 0, 0, 0.8);
+            border: 1px solid #555;
+            border-radius: 4px;
+            padding: 5px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            font-size: 0.75rem;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+
+        #chat-log {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .chat-msg { text-shadow: 1px 1px 0 #000; }
+        .chat-system { color: #ff3333; font-weight: bold; }
+        .chat-bot { color: #00ffff; }
+
+        #right-panel {
+            width: 300px;
+            background-color: rgba(20, 20, 20, 0.95);
+            border: 3px solid #ffcc00;
+            border-radius: 6px;
+            padding: 12px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .panel-title {
+            font-size: 1rem;
+            font-weight: bold;
+            color: #ffd700;
+            text-align: center;
+            border-bottom: 2px solid #555;
+            padding-bottom: 5px;
+            margin: 0;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.85rem;
+            margin: 3px 0;
+        }
+
+        .rename-btn {
+            background-color: #555;
+            color: #fff;
+            border: 1px solid #777;
+            padding: 2px 5px;
+            font-size: 0.7rem;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .rename-btn:hover { background-color: #ffcc00; color: #000; }
+
+        .eq-slot {
+            background-color: #222;
+            border: 1px dashed #777;
+            padding: 6px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-bottom: 4px;
+        }
+        .eq-slot:hover { background-color: #333; }
+
+        #inventory-container {
+            border: 1px solid #444;
+            background-color: #151515;
+            height: 120px;
+            overflow-y: auto;
+            padding: 5px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .inv-item {
+            font-size: 0.75rem;
+            padding: 5px;
+            border-radius: 3px;
+            background-color: #2a2a2a;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            border: 1px solid transparent;
+        }
+        .inv-item:hover { border-color: #ffcc00; }
+
+        .tier-0 { color: #ffffff; } 
+        .tier-1 { color: #3399ff; font-weight: bold; } 
+        .tier-2 { color: #cc33ff; font-weight: bold; } 
+        .tier-3 { color: #ffcc00; font-weight: bold; } 
+
+        #mobile-ctrl-zone {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 160px;
+            background: linear-gradient(to top, rgba(0,0,0,0.95), rgba(0,0,0,0.7));
+            border-top: 2px solid #ffcc00;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 999;
+            touch-action: none;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.5);
+            padding: 0 10px;
+        }
+
+        #joystick-base {
+            width: 100px;
+            height: 100px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 3px solid #ffcc00;
+            border-radius: 50%;
+            position: relative;
+        }
+
+        #joystick-knob {
+            width: 40px;
+            height: 40px;
+            background-color: #ffcc00;
+            border: 2px solid #000;
+            border-radius: 50%;
+            position: absolute;
+            top: 27px; 
+            left: 27px;
+        }
+
+        .mobile-action-btn {
+            width: 75px;
+            height: 75px;
+            background-color: #ff3333;
+            border: 3px solid #fff;
+            color: white;
+            border-radius: 50%;
+            font-size: 0.9rem;
+            font-weight: bold;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            cursor: pointer;
+        }
+        .mobile-action-btn:active { background-color: #b30000; }
+
+        /* 商店 Modal 通用樣式 */
+        .shop-modal {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 220px;
+            background-color: rgba(0, 0, 0, 0.95);
+            border: 3px solid #ffcc00;
+            border-radius: 8px;
+            padding: 15px;
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 20;
+            box-shadow: 0 0 20px #000;
+        }
+
+        .shop-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #222;
+            padding: 6px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        .shop-btn {
+            background-color: #ffcc00;
+            border: none;
+            color: #000;
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .close-shop-btn {
+            background-color: #ff3333;
+            color: #fff;
+            border: none;
+            padding: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+
+        #message-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.8rem;
+            color: #fff;
+            display: none;
+            z-index: 10;
+        }
+
+        #message-subtext {
+            font-size: 0.9rem;
+            margin-top: 15px;
+            color: #aaa;
+        }
+
+        .pet-select-btn {
+            background-color: #222;
+            border: 1px solid #555;
+            color: #fff;
+            width: 100%;
+            padding: 6px;
+            margin-bottom: 4px;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: left;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .pet-select-btn:hover {
+            border-color: #ffcc00;
+            background-color: #333;
+        }
+        .pet-select-btn.active-pet {
+            border-color: #00ffff;
+            background-color: rgba(0, 255, 255, 0.15);
+        }
+
+        @media (max-width: 768px) {
+            #mobile-tabs { display: flex; }
+            #game-layout { margin-top: 0; }
+            #chat-container { width: 100%; max-width: 296px; }
+            #right-panel {
+                width: 296px;
+                max-width: 100vw;
+                display: none; 
+                border-top: none;
+                border-radius: 0 0 6px 6px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div id="mobile-tabs">
+    <button id="tab-game" class="tab-btn active" onclick="switchMobileTab('game')">🎮 遊戲畫面</button>
+    <button id="tab-status" class="tab-btn" onclick="switchMobileTab('status')">🛡️ 角色狀態</button>
+</div>
+
+<div id="game-layout">
+    <div id="left-zone">
+        <div id="game-container">
+            <canvas id="gameCanvas"></canvas>
+            <div id="ui-layer">
+                <div id="ui-info" class="ui-text">樓層: 加載中...</div>
+                <!-- 互動配樂開關 -->
+                <div id="audio-toggle-btn" class="ui-text" onclick="toggleAudio()">🎵 音樂: 關閉</div>
+            </div>
+
+            <!-- 莉莉道具商 -->
+            <div id="shop-potion" class="shop-modal">
+                <div class="panel-title" style="font-size:0.9rem; margin-bottom:5px;">🧙 道具商·莉莉</div>
+                <div class="shop-item"><span>🧪 生命藥水</span><button class="shop-btn" onclick="buyPotion()">20G</button></div>
+                <div class="shop-item"><span>📜 回城卷軸</span><button class="shop-btn" onclick="buyScroll()">30G</button></div>
+                <button class="close-shop-btn" onclick="toggleShop('potion', false)">關閉</button>
+            </div>
+
+            <!-- 鐵心裝備商 -->
+            <div id="shop-forge" class="shop-modal">
+                <div class="panel-title" style="font-size:0.9rem; margin-bottom:5px;">傾聽者·鐵心 🙎</div>
+                <div class="shop-item"><span>🎁 隨機裝備箱</span><button class="shop-btn" onclick="buyGacha()">150G</button></div>
+                <button class="close-shop-btn" onclick="toggleShop('forge', false)">關閉</button>
+            </div>
+
+            <!-- 👲 寵物商人阿吉 -->
+            <div id="shop-pet" class="shop-modal">
+                <div class="panel-title" style="font-size:0.9rem; margin-bottom:5px;">👲 寵物商人·阿吉</div>
+                <div style="font-size: 0.75rem; text-align: center; color: #aaa; margin-bottom: 5px;">「想帶個動物夥伴去冒險嗎？」</div>
+                <div class="shop-item">
+                    <span>🥚 隨機寵物蛋</span>
+                    <button class="shop-btn" onclick="buyPetEgg()">100G</button>
+                </div>
+                <button class="close-shop-btn" onclick="toggleShop('pet', false)">關閉</button>
+            </div>
+
+            <!-- 🎒 寵物背包選單 Modal -->
+            <div id="pet-inventory" class="shop-modal" style="width: 250px;">
+                <div class="panel-title" style="font-size:0.9rem; margin-bottom:5px;">🐾 守護寵物背包</div>
+                <div id="pet-list-container" style="max-height: 180px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px;">
+                </div>
+                <button class="close-shop-btn" onclick="document.getElementById('pet-inventory').style.display = 'none';">關閉</button>
+            </div>
+
+            <div id="message-overlay">
+                <span id="message-title">Game Over</span>
+                <span id="message-subtext">請重新整理網頁開始</span>
+            </div>
+        </div>
+
+        <div id="chat-container">
+            <div id="chat-log"></div>
+        </div>
+    </div>
+
+    <div id="right-panel">
+        <div>
+            <h3 class="panel-title">🛡️ 冒險者面板</h3>
+            <div class="stat-row">
+                <span>名字: <strong id="char-name" style="color:#00ffff">HERO</strong></span>
+                <button class="rename-btn" onclick="renameHero()">✏️ 改名</button>
+            </div>
+            <div class="stat-row" style="cursor: pointer;" onclick="openPetBag()">
+                <span>守護寵物:</span>
+                <strong id="char-pet" style="color:#ff66cc">🧚 露比 (點擊更換)</strong>
+            </div>
+            <div class="stat-row"><span>當前狀態:</span><strong id="char-floor" style="color:#ffcc00">0F (安全區)</strong></div>
+            <div class="stat-row"><span>生命值:</span><strong id="char-hp" style="color:#ff3333">120 / 120</strong></div>
+            <div class="stat-row"><span>總攻擊力:</span><strong id="char-atk" style="color:#ff9900">10</strong></div>
+            <div class="stat-row"><span>總防禦力:</span><strong id="char-def" style="color:#3399ff">4</strong></div>
+            <div class="stat-row"><span>持有金幣:</span><strong id="char-gold" style="color:#ffd700">150 G</strong></div>
+            <div class="stat-row" style="border-top: 1px dashed #444; padding-top: 5px; margin-top: 5px;">
+                <span>🔑 鑰匙: <strong id="char-keys" style="color:#ffd700">0</strong> 把</span>
+                <span>💣 炸彈: <strong id="char-bombs" style="color:#ff3333">2</strong> 顆</span>
+            </div>
+            <div class="stat-row" style="color:#ff3333; font-weight:bold;" id="boss-warning"></div>
+        </div>
+
+        <div>
+            <h3 class="panel-title">💾 存檔管理</h3>
+            <div class="stat-row" style="justify-content: space-around; margin-top: 5px;">
+                <button class="rename-btn" onclick="exportSave()" style="padding: 5px 12px; font-weight: bold;">📤 匯出存檔</button>
+                <button class="rename-btn" onclick="importSave()" style="padding: 5px 12px; font-weight: bold;">📥 匯入存檔</button>
+            </div>
+        </div>
+
+        <div>
+            <h3 class="panel-title">⚔️ 身上裝備</h3>
+            <div class="eq-slot" id="slot-weapon" onclick="unequip('weapon')">武器: 空置 (ATK +0)</div>
+            <div class="eq-slot" id="slot-armor" onclick="unequip('armor')">防具: 空置 (DEF +0)</div>
+        </div>
+
+        <div>
+            <h3 class="panel-title">🎒 冒險背包 (<span id="inv-count">0</span>/15)</h3>
+            <div id="inventory-container"></div>
+        </div>
+    </div>
+</div>
+
+<div id="mobile-ctrl-zone">
+    <div id="joystick-base">
+        <div id="joystick-knob"></div>
+    </div>
+    <div class="mobile-action-btn" onclick="useBomb()">
+        <span>💣</span>
+        <span style="font-size: 0.7rem; margin-top:2px;">引爆炸彈</span>
+    </div>
+</div>
+
+<script>
+    // ==================== 🔊 Web Audio API FC 曠野之息配樂引擎 ====================
+    let audioCtx = null;
+    let isAudioEnabled = false;
+    let musicInterval = null;
+
+    // 初始化音訊
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+    }
+
+    // 聲音開關切換
+    function toggleAudio() {
+        initAudio();
+        isAudioEnabled = !isAudioEnabled;
+        const btn = document.getElementById('audio-toggle-btn');
+        if (isAudioEnabled) {
+            btn.innerText = "🎵 音樂: 開啟";
+            btn.style.color = "#00ffcc";
+            btn.style.borderColor = "#00ffcc";
+            startBackgroundMusic();
+            playSfx('pickup'); // 撥放提示音
+        } else {
+            btn.innerText = "🎵 音樂: 關閉";
+            btn.style.color = "#ffcc00";
+            btn.style.borderColor = "#ffcc00";
+            stopBackgroundMusic();
+        }
+    }
+
+    // FC 復古音效生成器 (Square / Triangle / Noise)
+    function playSfx(type) {
+        if (!isAudioEnabled || !audioCtx) return;
+
+        const now = audioCtx.currentTime;
+
+        if (type === 'pickup') { // 撿到道具：清脆上升琶音 (FC 經典方波)
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'square';
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.frequency.setValueAtTime(523.25, now); // C5
+            osc.frequency.setValueAtTime(659.25, now + 0.08, now + 0.08); // E5
+            osc.frequency.setValueAtTime(783.99, now + 0.16, now + 0.16); // G5
+            osc.frequency.setValueAtTime(1046.50, now + 0.24, now + 0.24); // C6
+
+            gain.gain.setValueAtTime(0.15, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+
+            osc.start(now);
+            osc.stop(now + 0.4);
+        }
+        else if (type === 'hit') { // 戰鬥攻擊：低頻白雜訊/頻率下滑 (FC 砍擊)
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.frequency.setValueAtTime(350, now);
+            osc.frequency.exponentialRampToValueAtTime(80, now + 0.15);
+
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+
+            osc.start(now);
+            osc.stop(now + 0.15);
+        }
+        else if (type === 'bomb') { // 炸彈爆炸：超重低音下滑 + 雜訊模擬
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'triangle'; // 三角波模擬 FC 低音重擊
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.frequency.setValueAtTime(180, now);
+            osc.frequency.linearRampToValueAtTime(30, now + 0.5);
+
+            gain.gain.setValueAtTime(0.4, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+
+            osc.start(now);
+            osc.stop(now + 0.6);
+        }
+        else if (type === 'hurt') { // 玩家受傷：顫音頻率下滑
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'square';
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            osc.frequency.setValueAtTime(220, now);
+            osc.frequency.linearRampToValueAtTime(110, now + 0.25);
+
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+
+            osc.start(now);
+            osc.stop(now + 0.25);
+        }
+    }
+
+    // 自適應背景音樂排程（模擬曠野之息極簡隨機鋼琴風格）
+    function startBackgroundMusic() {
+        if (musicInterval) clearInterval(musicInterval);
+
+        function playTownNote() {
+            if (!isAudioEnabled || !audioCtx) return;
+            const now = audioCtx.currentTime;
+
+            // 曠野之息風：優雅、高頻、略帶不協調的 8-bit 和弦點綴 (FC 2A03 方波仿鋼琴)
+            const rootNotes = [523.25, 587.33, 659.25, 783.99, 880.00, 987.77, 1046.50]; // C5, D5, E5, G5, A5, B5, C6
+            const noteCount = Math.floor(Math.random() * 3) + 1; // 隨機彈奏 1-3 個音
+
+            for (let i = 0; i < noteCount; i++) {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                // 混用方波(FC主旋律)與三角波(FC低音/溫和音)
+                osc.type = Math.random() > 0.4 ? 'sine' : 'triangle'; 
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const baseFreq = rootNotes[Math.floor(Math.random() * rootNotes.length)];
+                // 微小的琶音時間差
+                const delay = i * (Math.random() * 0.15 + 0.05); 
+
+                osc.frequency.setValueAtTime(baseFreq, now + delay);
+                
+                gain.gain.setValueAtTime(0, now);
+                gain.gain.linearRampToValueAtTime(0.12, now + delay + 0.05); // 緩慢漸強
+                gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 1.5); // 緩慢延音釋放
+
+                osc.start(now + delay);
+                osc.stop(now + delay + 1.6);
+            }
+        }
+
+        function playAbyssNote() {
+            if (!isAudioEnabled || !audioCtx) return;
+            const now = audioCtx.currentTime;
+
+            // 深淵風：壓抑、冰冷、低沉的單音三角波，夾雜偶爾的尖銳方波
+            const isPulse = Math.random() > 0.7;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            if (isPulse) {
+                // 尖銳方波 (突然的危險感)
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(Math.random() > 0.5 ? 987.77 : 1174.66, now); // B5 或 D6
+                gain.gain.setValueAtTime(0.04, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+                osc.start(now);
+                osc.stop(now + 0.5);
+            } else {
+                // 低沉三角波 (地底風)
+                osc.type = 'triangle';
+                const lowNotes = [110.00, 130.81, 146.83, 164.81]; // A2, C3, D3, E3
+                osc.frequency.setValueAtTime(lowNotes[Math.floor(Math.random() * lowNotes.length)], now);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 2.0);
+                osc.start(now);
+                osc.stop(now + 2.1);
+            }
+        }
+
+        // 隨機節奏調度器：每 1.5 秒到 3.5 秒決定是否彈奏音符
+        function tick() {
+            if (currentFloor === 0) {
+                playTownNote();
+            } else {
+                playAbyssNote();
+            }
+            // 隨機重設下一次彈奏的間隔時間，呈現曠野之息的不規則呼吸感
+            clearInterval(musicInterval);
+            const nextTick = Math.random() * 2000 + 1500; 
+            musicInterval = setInterval(tick, nextTick);
+        }
+
+        musicInterval = setInterval(tick, 2000);
+    }
+
+    function stopBackgroundMusic() {
+        if (musicInterval) {
+            clearInterval(musicInterval);
+            musicInterval = null;
+        }
+    }
+
+
+    // ==================== 🎮 遊戲核心邏輯 ====================
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    const uiInfo = document.getElementById('ui-info');
+    const chatLog = document.getElementById('chat-log');
+    const messageOverlay = document.getElementById('message-overlay');
+
+    const GRID_SIZE = 36; 
+    const VIEW_COLS = 9;
+    const VIEW_ROWS = 9;
+    const MAP_COLS = 27;
+    const MAP_ROWS = 27;
+
+    canvas.width = VIEW_COLS * GRID_SIZE;
+    canvas.height = VIEW_ROWS * GRID_SIZE;
+
+    let gameState = 'playing';
+    let currentFloor = 0; 
+    let frameCount = 0;
+    let isBossAlive = false; 
+
+    // 全局寵物資料庫
+    const PET_DATABASE = {
+        'ruby': { id: 'ruby', name: '露比', emoji: '🧚', desc: 'HP+20, DEF+2', hp: 20, atk: 0, def: 2 },
+        'dog': { id: 'dog', name: '柴犬・小黃', emoji: '🐶', desc: 'ATK+4', hp: 0, atk: 4, def: 0 },
+        'turtle': { id: 'turtle', name: '玄武・小綠', emoji: '🐢', desc: 'DEF+4', hp: 0, atk: 0, def: 4 },
+        'rabbit': { id: 'rabbit', name: '靈兔・小雪', emoji: '🐰', desc: 'HP+40', hp: 40, atk: 0, def: 0 },
+        'fox': { id: 'fox', name: '幻狐・阿狸', emoji: '🦊', desc: 'ATK+2, DEF+2', hp: 0, atk: 2, def: 2 },
+        'cat': { id: 'cat', name: '招財貓・咪咪', emoji: '🐱', desc: '獲得時炸彈+1且金幣售出1.2倍', hp: 0, atk: 0, def: 0, special: 'merchant_buff' }
+    };
+
+    let player = {
+        name: "HERO",
+        gridX: 4,
+        gridY: 4,
+        hp: 120,
+        maxHp: 120,
+        baseAtk: 10,
+        baseDef: 4, 
+        gold: 150,
+        keys: 0,
+        bombs: 2,
+        equipment: { weapon: null, armor: null },
+        inventory: [],
+        activePet: 'ruby', 
+        petCollection: ['ruby'] 
+    };
+
+    let pet = { x: 4 * GRID_SIZE, y: 4 * GRID_SIZE };
+    let camera = { x: 0, y: 0 };
+
+    const TIERS = [
+        { name: "普通", color: "tier-0", sellMultiplier: 1 },
+        { name: "稀有", color: "tier-1", sellMultiplier: 2.5 },
+        { name: "史詩", color: "tier-2", sellMultiplier: 5 },
+        { name: "傳奇", color: "tier-3", sellMultiplier: 12 }
+    ];
+
+    let mapData = []; 
+    let entities = [];
+
+    function renameHero() {
+        const newName = prompt("請輸入您的新名字：", player.name);
+        if (newName && newName.trim() !== "") {
+            player.name = newName.substring(0, 8);
+            appendChat("系統", `您已成功改名為 【${player.name}】！`, "system");
+            updateCharPanel();
+        }
+    }
+
+    function switchMobileTab(tab) {
+        if (window.innerWidth > 768) return;
+        const leftZone = document.getElementById('left-zone');
+        const rightPanel = document.getElementById('right-panel');
+        const btnGame = document.getElementById('tab-game');
+        const btnStatus = document.getElementById('tab-status');
+        if (tab === 'game') {
+            leftZone.style.display = 'flex'; rightPanel.style.display = 'none';
+            btnGame.classList.add('active'); btnStatus.classList.remove('active');
+        } else {
+            leftZone.style.display = 'none'; rightPanel.style.display = 'flex';
+            btnGame.classList.remove('active'); btnStatus.classList.add('active');
+        }
+    }
+
+    function generateRandomItem(floor) {
+        const rand = Math.random();
+        let tier = 0;
+        if (rand > 0.95) tier = 3; 
+        else if (rand > 0.80) tier = 2; 
+        else if (rand > 0.50) tier = 1;
+        const isWeapon = Math.random() > 0.5;
+        const statValue = Math.max(1, Math.floor((floor * 2 + Math.random() * 4) * (tier + 1)));
+        const name = `[${floor}F] ${TIERS[tier].name}·${isWeapon ? '魔幻神兵' : '法師輕甲'}`;
+        return {
+            id: Date.now() + Math.random().toString(36).substr(2, 5),
+            name: name, type: isWeapon ? 'weapon' : 'armor', tier: tier,
+            atk: isWeapon ? statValue : 0, def: !isWeapon ? statValue : 0,
+            price: Math.floor((floor * 6 + 12) * TIERS[tier].sellMultiplier)
+        };
+    }
+
+    function getPetStats() {
+        const currentPetData = PET_DATABASE[player.activePet || 'ruby'];
+        if (!currentPetData) return { hp: 0, atk: 0, def: 0 };
+        return {
+            hp: currentPetData.hp || 0,
+            atk: currentPetData.atk || 0,
+            def: currentPetData.def || 0
+        };
+    }
+
+    function updateCharPanel() {
+        let eqAtk = player.equipment.weapon ? player.equipment.weapon.atk : 0;
+        let eqDef = player.equipment.armor ? player.equipment.armor.def : 0;
+
+        const petBonus = getPetStats();
+        player.maxHp = 120 + petBonus.hp;
+        if (player.hp > player.maxHp) player.hp = player.maxHp;
+
+        const currentPetData = PET_DATABASE[player.activePet || 'ruby'];
+
+        document.getElementById('char-name').innerText = player.name;
+        document.getElementById('char-floor').innerText = currentFloor === 0 ? "0F (中央城鎮)" : `${currentFloor}F (無盡深淵)`;
+        document.getElementById('char-hp').innerText = `${player.hp} / ${player.maxHp}`;
+        document.getElementById('char-atk').innerText = player.baseAtk + eqAtk + petBonus.atk;
+        document.getElementById('char-def').innerText = player.baseDef + eqDef + petBonus.def;
+        document.getElementById('char-gold').innerText = `${player.gold} G`;
+        document.getElementById('char-keys').innerText = player.keys;
+        document.getElementById('char-bombs').innerText = player.bombs;
+        
+        document.getElementById('char-pet').innerHTML = `${currentPetData.emoji} ${currentPetData.name} <span style="font-size:0.75rem;color:#ffcc00">(${currentPetData.desc})</span>`;
+
+        document.getElementById('boss-warning').innerText = (currentFloor > 0 && isBossAlive) ? "⚠️ 本層小王未擊殺，通道已封鎖！" : "";
+
+        const slotW = document.getElementById('slot-weapon');
+        slotW.innerText = player.equipment.weapon ? `⚔️ ${player.equipment.weapon.name} (+${player.equipment.weapon.atk})` : "⚔️ 武器: 空置";
+        const slotA = document.getElementById('slot-armor');
+        slotA.innerText = player.equipment.armor ? `🛡️ ${player.equipment.armor.name} (+${player.equipment.armor.def})` : "🛡️ 防具: 空置";
+
+        const invContainer = document.getElementById('inventory-container');
+        invContainer.innerHTML = '';
+        player.inventory.forEach(item => {
+            const div = document.createElement('div');
+            div.className = `inv-item ${TIERS[item.tier].color}`;
+            
+            let finalPrice = item.price;
+            if (player.activePet === 'cat') {
+                finalPrice = Math.floor(item.price * 1.2);
+            }
+
+            div.innerHTML = `<span>${item.name}</span><span style="color:#ffd700">${finalPrice}G</span>`;
+            div.onclick = () => handleItemClick(item);
+            invContainer.appendChild(div);
+        });
+        document.getElementById('inv-count').innerText = player.inventory.length;
+        uiInfo.innerText = currentFloor === 0 ? "📍 皇家城鎮 (安全區)" : `👹 無限層深淵：第 ${currentFloor} 層`;
+    }
+
+    function openPetBag() {
+        const container = document.getElementById('pet-list-container');
+        container.innerHTML = '';
+        
+        player.petCollection.forEach(petId => {
+            const petData = PET_DATABASE[petId];
+            if (!petData) return;
+            
+            const btn = document.createElement('button');
+            btn.className = `pet-select-btn ${player.activePet === petId ? 'active-pet' : ''}`;
+            btn.innerHTML = `<span>${petData.emoji} ${petData.name}</span> <span style="color:#aaa; font-size:0.7rem;">${petData.desc}</span>`;
+            btn.onclick = () => selectPet(petId);
+            container.appendChild(btn);
+        });
+        
+        document.getElementById('pet-inventory').style.display = 'flex';
+    }
+
+    function selectPet(petId) {
+        player.activePet = petId;
+        appendChat("系統", `更換守護寵物為：${PET_DATABASE[petId].emoji} ${PET_DATABASE[petId].name}`, "system");
+        document.getElementById('pet-inventory').style.display = 'none';
+        playSfx('pickup');
+        updateCharPanel();
+    }
+
+    function buyPetEgg() {
+        if (player.gold < 100) {
+            appendChat("系統", "金幣不足 100G，無法購買寵物蛋！", "system");
+            return;
+        }
+
+        const allPetIds = Object.keys(PET_DATABASE);
+        const lockedPets = allPetIds.filter(id => !player.petCollection.includes(id));
+
+        if (lockedPets.length === 0) {
+            appendChat("系統", "阿吉 👲：「你已經收集了所有的動物寵物了！太厲害了！」", "system");
+            return;
+        }
+
+        player.gold -= 100;
+        const luckyId = lockedPets[Math.floor(Math.random() * lockedPets.length)];
+        const luckyPet = PET_DATABASE[luckyId];
+
+        player.petCollection.push(luckyId);
+        appendChat("系統", `🐣 恭喜！你孵化出了新的守護動物：${luckyPet.emoji} ${luckyPet.name}！`, "system");
+        playSfx('pickup');
+
+        if (luckyId === 'cat') {
+            player.bombs += 1;
+            player.gold += 50;
+            appendChat("系統", `🐱 招財貓在加入時為您帶來了 1 顆 💣 炸彈與 50G 的招財好運！`, "system");
+        }
+
+        updateCharPanel();
+        toggleShop('pet', false);
+    }
+
+    function handleItemClick(item) {
+        if (document.getElementById('shop-potion').style.display === 'flex' || document.getElementById('shop-forge').style.display === 'flex' || document.getElementById('shop-pet').style.display === 'flex') {
+            let finalPrice = item.price;
+            if (player.activePet === 'cat') {
+                finalPrice = Math.floor(item.price * 1.2);
+            }
+            player.gold += finalPrice;
+            player.inventory = player.inventory.filter(i => i.id !== item.id);
+            appendChat("系統", `出售了 [${item.name}] 獲得 ${finalPrice}G`, "system");
+            playSfx('pickup');
+            updateCharPanel();
+            return;
+        }
+
+        if (item.type === 'potion') {
+            player.hp = Math.min(player.maxHp, player.hp + 60);
+            player.inventory = player.inventory.filter(i => i.id !== item.id);
+            appendChat("系統", "使用了生命藥水恢復 60HP！", "system");
+            playSfx('pickup');
+        } 
+        else if (item.type === 'scroll') {
+            player.inventory = player.inventory.filter(i => i.id !== item.id);
+            loadFloor(0);
+            player.hp = player.maxHp;
+            appendChat("系統", "啟動回城卷軸！已返回城鎮並補滿生命值。", "system");
+            playSfx('pickup');
+        }
+        else if (item.type === 'weapon') {
+            if (player.equipment.weapon) player.inventory.push(player.equipment.weapon);
+            player.equipment.weapon = item;
+            player.inventory = player.inventory.filter(i => i.id !== item.id);
+            playSfx('pickup');
+        } 
+        else if (item.type === 'armor') {
+            if (player.equipment.armor) player.inventory.push(player.equipment.armor);
+            player.equipment.armor = item;
+            player.inventory = player.inventory.filter(i => i.id !== item.id);
+            playSfx('pickup');
+        }
+        updateCharPanel();
+    }
+
+    function unequip(type) {
+        if (player.inventory.length >= 15) return;
+        const item = player.equipment[type];
+        if (item) { 
+            player.inventory.push(item); 
+            player.equipment[type] = null; 
+            playSfx('pickup');
+            updateCharPanel(); 
+        }
+    }
+
+    function toggleShop(type, show) { 
+        document.getElementById(`shop-${type}`).style.display = show ? 'flex' : 'none'; 
+        if(show) playSfx('pickup');
+    }
+    function buyPotion() {
+        if (player.gold < 20 || player.inventory.length >= 15) return;
+        player.gold -= 20; player.inventory.push({ id: 'pot-'+Date.now(), name: '🧪 生命藥水', type: 'potion', tier: 0, price: 10 });
+        playSfx('pickup');
+        updateCharPanel();
+    }
+    function buyScroll() {
+        if (player.gold < 30 || player.inventory.length >= 15) return;
+        player.gold -= 30; player.inventory.push({ id: 'scr-'+Date.now(), name: '📜 回城卷軸', type: 'scroll', tier: 0, price: 15 });
+        playSfx('pickup');
+        updateCharPanel();
+    }
+    function buyGacha() {
+        if (player.gold < 150 || player.inventory.length >= 15) return;
+        player.gold -= 150; player.inventory.push(generateRandomItem(Math.max(1, currentFloor)));
+        playSfx('pickup');
+        updateCharPanel();
+    }
+
+    function appendChat(user, text, type = 'bot') {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `chat-msg chat-${type}`;
+        msgDiv.innerHTML = type === 'system' ? `<span>[系統] ${text}</span>` : `<span>[世界] <strong>${user}</strong>: ${text}</span>`;
+        chatLog.appendChild(msgDiv);
+        while (chatLog.childNodes.length > 4) { chatLog.removeChild(chatLog.firstChild); }
+    }
+
+    function useBomb() {
+        if (gameState !== 'playing') return;
+        if (player.bombs <= 0) { appendChat("系統", "沒有炸彈了！", "system"); return; }
+        player.bombs--;
+        appendChat("系統", "💥 碰！引爆炸彈！", "system");
+        playSfx('bomb');
+
+        for (let dx = -1; dx <= 1; dx++) {
+            for (let dy = -1; dy <= 1; dy++) {
+                let tx = player.gridX + dx; let ty = player.gridY + dy;
+                if (tx <= 0 || tx >= MAP_COLS - 1 || ty <= 0 || ty >= MAP_ROWS - 1) continue;
+
+                if (mapData[ty][tx] === 1) mapData[ty][tx] = 0; 
+
+                entities.forEach(ent => {
+                    if (!ent.removed && ent.gridX === tx && ent.gridY === ty && (ent.type === 'monster' || ent.type === 'boss')) {
+                        if (ent.type === 'boss') {
+                            ent.hp -= 100; 
+                            appendChat("系統", "炸彈對守層小王造成 100 點重創！", "system");
+                            if (ent.hp <= 0) {
+                                ent.removed = true; isBossAlive = false;
+                                appendChat("系統", "✨ 守層小王已倒下！下一層通道 🪜 已開啟！", "system");
+                            }
+                        } else {
+                            ent.removed = true;
+                            appendChat("系統", "炸彈秒殺了普通怪物！", "system");
+                        }
+                    }
+                });
+            }
+        }
+        updateCharPanel();
+    }
+
+    function loadFloor(floorNum) {
+        currentFloor = floorNum;
+        entities = [];
+        toggleShop('potion', false); toggleShop('forge', false); toggleShop('pet', false);
+
+        mapData = [];
+        for (let r = 0; r < MAP_ROWS; r++) {
+            let row = [];
+            for (let c = 0; c < MAP_COLS; c++) { row.push(1); }
+            mapData.push(row);
+        }
+
+        if (floorNum === 0) {
+            isBossAlive = false;
+            for (let r = 2; r < 7; r++) {
+                for (let c = 2; c < 7; c++) { mapData[r][c] = 0; }
+            }
+            entities.push(new Entity(3, 2, 'merchant_potion'));
+            entities.push(new Entity(5, 2, 'merchant_forge'));
+            entities.push(new Entity(2, 5, 'merchant_pet'));
+            entities.push(new Entity(4, 6, 'portal'));
+            player.gridX = 4; player.gridY = 4;
+        } else {
+            isBossAlive = true;
+            let cx = 4, cy = 4;
+            mapData[cy][cx] = 0;
+            
+            for (let i = 0; i < 350; i++) {
+                let dir = [{x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}][Math.floor(Math.random()*4)];
+                cx = Math.max(1, Math.min(MAP_COLS - 2, cx + dir.x * 2));
+                cy = Math.max(1, Math.min(MAP_ROWS - 2, cy + dir.y * 2));
+                mapData[cy][cx] = 0;
+                mapData[cy - dir.y][cx - dir.x] = 0; 
+            }
+
+            player.gridX = 4; player.gridY = 4;
+            mapData[4][4] = 0;
+
+            let emptyCells = [];
+            for (let r = 1; r < MAP_ROWS - 1; r++) {
+                for (let c = 1; c < MAP_COLS - 1; c++) {
+                    if (mapData[r][c] === 0 && !(c === 4 && r === 4)) {
+                        emptyCells.push({x: c, y: r});
+                    }
+                }
+            }
+
+            emptyCells.sort(() => Math.random() - 0.5);
+
+            if (emptyCells.length > 0) { let p = emptyCells.pop(); entities.push(new Entity(p.x, p.y, 'nextStairs')); }
+
+            for(let i=0; i<3 && emptyCells.length>0; i++) {
+                let p = emptyCells.pop(); entities.push(new Entity(p.x, p.y, 'key'));
+            }
+            for(let i=0; i<3 && emptyCells.length>0; i++) {
+                let p = emptyCells.pop(); entities.push(new Entity(p.x, p.y, 'chest'));
+            }
+            for(let i=0; i<2 && emptyCells.length>0; i++) {
+                let p = emptyCells.pop(); entities.push(new Entity(p.x, p.y, 'bomb_item'));
+            }
+
+            if (emptyCells.length > 0) {
+                let p = emptyCells.pop();
+                entities.push(new Entity(p.x, p.y, 'boss'));
+            }
+
+            for (let i = 0; i < 8 && emptyCells.length > 0; i++) {
+                let p = emptyCells.pop();
+                entities.push(new Entity(p.x, p.y, 'monster'));
+            }
+        }
+
+        // 如果音訊已開啟，背景音樂會自適應切換風格
+        if (isAudioEnabled) {
+            startBackgroundMusic();
+        }
+
+        updateCharPanel();
+    }
+
+    class Entity {
+        constructor(gridX, gridY, type) {
+            this.gridX = gridX; this.gridY = gridY; this.type = type;
+            this.removed = false;
+            const scale = 1 + currentFloor * 0.25;
+            
+            if (type === 'monster') {
+                this.maxHp = Math.floor(16 * scale); this.hp = this.maxHp;
+                this.atk = Math.floor(6 * (1 + currentFloor * 0.1));
+                this.def = Math.floor(2 * (1 + currentFloor * 0.05));
+                this.emoji = ['💀', '👺', '🗿'][Math.floor(Math.random()*3)];
+            }
+            if (type === 'boss') {
+                this.maxHp = Math.floor(60 * scale); this.hp = this.maxHp;
+                this.atk = Math.floor(14 * (1 + currentFloor * 0.12));
+                this.def = Math.floor(5 * (1 + currentFloor * 0.08));
+                this.emoji = '🦁'; 
+            }
+        }
+    }
+
+    function handleCombat(target) {
+        let eqAtk = player.equipment.weapon ? player.equipment.weapon.atk : 0;
+        let eqDef = player.equipment.armor ? player.equipment.armor.def : 0;
+        const petBonus = getPetStats();
+        
+        target.hp -= Math.max(1, (player.baseAtk + eqAtk + petBonus.atk) - target.def);
+        playSfx('hit');
+
+        if (target.hp <= 0) {
+            target.removed = true;
+            player.gold += Math.floor(currentFloor * 8 + Math.random() * 15 + 10);
+            if (target.type === 'boss') {
+                isBossAlive = false;
+                appendChat("系統", "✨ 守層小王已被擊殺！通往下一層的通道 🪜 已開啟！", "system");
+            }
+        } else {
+            player.hp -= Math.max(1, target.atk - (player.baseDef + eqDef + petBonus.def));
+            playSfx('hurt');
+            if (player.hp <= 0) { gameState = 'lose'; player.hp = 0; }
+        }
+        updateCharPanel();
+    }
+
+    function tryMove(dx, dy) {
+        if (gameState !== 'playing') return;
+        const nx = player.gridX + dx, ny = player.gridY + dy;
+        
+        if (ny < 0 || ny >= MAP_ROWS || nx < 0 || nx >= MAP_COLS) return;
+        if (mapData[ny][nx] === 1) return; 
+
+        for (let i = entities.length - 1; i >= 0; i--) {
+            const ent = entities[i]; if (ent.removed) continue;
+            if (ent.gridX === nx && ent.gridY === ny) {
+                if (ent.type === 'key') {
+                    ent.removed = true; player.keys++; appendChat("系統", "撿到了一慢 🔑 鑰匙！", "system");
+                    playSfx('pickup');
+                    break;
+                }
+                if (ent.type === 'bomb_item') {
+                    ent.removed = true; player.bombs++; appendChat("系統", "撿到了一顆 💣 炸彈！", "system");
+                    playSfx('pickup');
+                    break;
+                }
+                if (ent.type === 'chest') {
+                    if (player.keys <= 0) { appendChat("系統", "需要一把 🔑 鑰匙才能打開寶箱！", "system"); return; }
+                    player.keys--; ent.removed = true;
+                    playSfx('pickup');
+                    if (player.inventory.length < 15) {
+                        const item = generateRandomItem(currentFloor);
+                        player.inventory.push(item);
+                        appendChat("系統", `打開寶箱，獲得：[${item.name}]！`, "system");
+                    }
+                    break;
+                }
+                if (ent.type === 'merchant_potion') { toggleShop('potion', true); return; }
+                if (ent.type === 'merchant_forge') { toggleShop('forge', true); return; }
+                if (ent.type === 'merchant_pet') { toggleShop('pet', true); return; }
+                if (ent.type === 'portal') { loadFloor(1); return; }
+                if (ent.type === 'nextStairs') { 
+                    if (isBossAlive) { appendChat("系統", "⚠️ 守層小王依然生存，下一層的通道被遠古魔法封印中！", "system"); return; }
+                    loadFloor(currentFloor + 1); 
+                    return; 
+                }
+                if (ent.type === 'monster' || ent.type === 'boss') { handleCombat(ent); return; }
+            }
+        }
+        player.gridX = nx; player.gridY = ny;
+        updateCharPanel();
+    }
+
+    let keysPressed = {};
+    window.addEventListener('keydown', (e) => { 
+        keysPressed[e.key] = true; 
+        if (e.key === ' ') { e.preventDefault(); useBomb(); }
+    });
+    window.addEventListener('keyup', (e) => { keysPressed[e.key] = false; });
+
+    const jBase = document.getElementById('joystick-base');
+    const jKnob = document.getElementById('joystick-knob');
+    let jActive = false; let sX = 0, sY = 0; let jDx = 0, jDy = 0;
+
+    jBase.addEventListener('touchstart', (e) => {
+        e.preventDefault(); jActive = true;
+        const r = jBase.getBoundingClientRect(); sX = r.left + r.width/2; sY = r.top + r.height/2;
+    }, { passive: false });
+
+    window.addEventListener('touchmove', (e) => { 
+        if (jActive) {
+            let touch = e.touches[0];
+            let dx = touch.clientX - sX, dy = touch.clientY - sY;
+            const dist = Math.sqrt(dx*dx + dy*dy), limit = 30;
+            if (dist > limit) { dx = (dx/dist)*limit; dy = (dy/dist)*limit; }
+            jKnob.style.transform = `translate(${dx}px, ${dy}px)`;
+            jDx = dx/limit; jDy = dy/limit;
+        }
+    }, { passive: false });
+
+    window.addEventListener('touchend', () => { jActive = false; jKnob.style.transform = 'translate(0px,0px)'; jDx = 0; jDy = 0; });
+
+    let moveCooldown = 0;
+    function handleInput() {
+        if (moveCooldown > 0) { moveCooldown--; return; }
+        let dx = 0, dy = 0;
+        if (keysPressed['ArrowUp'] || keysPressed['w']) dy = -1;
+        else if (keysPressed['ArrowDown'] || keysPressed['s']) dy = 1;
+        else if (keysPressed['ArrowLeft'] || keysPressed['a']) dx = -1;
+        else if (keysPressed['ArrowRight'] || keysPressed['d']) dx = 1;
+
+        if (dx === 0 && dy === 0 && jActive) {
+            if (Math.abs(jDx) > Math.abs(jDy)) { dx = jDx > 0.4 ? 1 : (jDx < -0.4 ? -1 : 0); }
+            else { dy = jDy > 0.4 ? 1 : (jDy < -0.4 ? -1 : 0); }
+        }
+        if (dx !== 0 || dy !== 0) { tryMove(dx, dy); moveCooldown = 9; }
+    }
+
+    function updateCamera() {
+        camera.x = player.gridX - Math.floor(VIEW_COLS / 2);
+        camera.y = player.gridY - Math.floor(VIEW_ROWS / 2);
+        camera.x = Math.max(0, Math.min(MAP_COLS - VIEW_COLS, camera.x));
+        camera.y = Math.max(0, Math.min(MAP_ROWS - VIEW_ROWS, camera.y));
+    }
+
+    function gameLoop() {
+        frameCount++;
+        if (gameState === 'playing') { handleInput(); updateCamera(); }
+
+        ctx.fillStyle = '#000000'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        let wave = Math.sin(frameCount * 0.12) * 4;
+
+        ctx.font = "26px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        for (let r = 0; r < VIEW_ROWS; r++) {
+            for (let c = 0; c < VIEW_COLS; c++) {
+                let mapX = camera.x + c; let mapY = camera.y + r;
+                let screenX = c * GRID_SIZE + GRID_SIZE/2;
+                let screenY = r * GRID_SIZE + GRID_SIZE/2;
+                if (mapData[mapY] && mapData[mapY][mapX] === 1) {
+                    ctx.fillText("🧱", screenX, screenY);
+                }
+            }
+        }
+
+        entities.forEach(ent => {
+            if (ent.removed) return;
+            if (ent.type === 'nextStairs' && isBossAlive) return;
+
+            let scX = (ent.gridX - camera.x) * GRID_SIZE + GRID_SIZE/2;
+            let scY = (ent.gridY - camera.y) * GRID_SIZE + GRID_SIZE/2;
+
+            if (ent.gridX >= camera.x && ent.gridX < camera.x + VIEW_COLS && ent.gridY >= camera.y && ent.gridY < camera.y + VIEW_ROWS) {
+                ctx.save();
+                if (ent.type === 'merchant_potion') {
+                    ctx.fillText("🧙", scX, scY + wave); 
+                } else if (ent.type === 'merchant_forge') {
+                    ctx.restore(); ctx.save();
+                    ctx.font = "26px Arial"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+                    ctx.fillText("傾", scX - 10, scY + wave); 
+                    ctx.fillText("🙎", scX, scY + wave); 
+                } else if (ent.type === 'merchant_pet') {
+                    ctx.fillText("👲", scX, scY + wave);
+                } else if (ent.type === 'portal') {
+                    ctx.fillText("🌀", scX, scY);
+                } else if (ent.type === 'nextStairs') {
+                    ctx.fillText("🪜", scX, scY);
+                } else if (ent.type === 'key') {
+                    ctx.fillText("🔑", scX, scY);
+                } else if (ent.type === 'bomb_item') {
+                    ctx.fillText("💣", scX, scY);
+                } else if (ent.type === 'chest') {
+                    ctx.fillText("🧰", scX, scY);
+                } else if (ent.type === 'monster') {
+                    ctx.fillText(ent.emoji, scX, scY + wave);
+                } else if (ent.type === 'boss') {
+                    ctx.font = "52px Arial";
+                    ctx.fillText(ent.emoji, scX, scY + wave - 6);
+                }
+                ctx.restore();
+            }
+        });
+
+        if (gameState === 'playing') {
+            let pScX = (player.gridX - camera.x) * GRID_SIZE + GRID_SIZE/2;
+            let pScY = (player.gridY - camera.y) * GRID_SIZE + GRID_SIZE/2;
+            
+            let petTargetX = (player.gridX - 0.6) * GRID_SIZE;
+            let petTargetY = (player.gridY - 0.5) * GRID_SIZE;
+            pet.x += (petTargetX - pet.x) * 0.15; pet.y += (petTargetY - pet.y) * 0.15;
+
+            let petScX = (pet.x / GRID_SIZE - camera.x) * GRID_SIZE + GRID_SIZE/2;
+            let petScY = (pet.y / GRID_SIZE - camera.y) * GRID_SIZE + GRID_SIZE/2;
+
+            const currentPetData = PET_DATABASE[player.activePet || 'ruby'];
+            const petEmoji = currentPetData ? currentPetData.emoji : '🧚';
+
+            ctx.fillText(petEmoji, petScX, petScY + Math.sin(frameCount * 0.15) * 4);
+            ctx.fillText("🧝", pScX, pScY + wave); 
+        }
+
+        let miniSize = 3; 
+        let miniW = MAP_COLS * miniSize;
+        let miniH = MAP_ROWS * miniSize;
+        let offsetX = canvas.width - miniW - 8;
+        let offsetY = canvas.height - miniH - 8;
+
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillRect(offsetX - 2, offsetY - 2, miniW + 4, miniH + 4);
+        ctx.strokeStyle = '#ffcc00'; ctx.lineWidth = 1;
+        ctx.strokeRect(offsetX - 2, offsetY - 2, miniW + 4, miniH + 4);
+
+        for (let r = 0; r < MAP_ROWS; r++) {
+            for (let c = 0; c < MAP_COLS; c++) {
+                if (mapData[r][c] === 1) {
+                    ctx.fillStyle = '#444444'; 
+                    ctx.fillRect(offsetX + c * miniSize, offsetY + r * miniSize, miniSize, miniSize);
+                }
+            }
+        }
+
+        entities.forEach(ent => {
+            if (ent.removed) return;
+            if (ent.type === 'boss') {
+                ctx.fillStyle = '#ff0033'; 
+                ctx.fillRect(offsetX + ent.gridX * miniSize, offsetY + ent.gridY * miniSize, miniSize + 1, miniSize + 1);
+            }
+        });
+
+        ctx.fillStyle = '#00ff66'; 
+        ctx.fillRect(offsetX + player.gridX * miniSize, offsetY + player.gridY * miniSize, miniSize + 1, miniSize + 1);
+
+        if (gameState !== 'playing') { messageOverlay.style.display = 'flex'; }
+        requestAnimationFrame(gameLoop);
+    }
+
+    function exportSave() {
+        const saveData = {
+            version: "1.1",
+            timestamp: Date.now(),
+            currentFloor: currentFloor,
+            isBossAlive: isBossAlive,
+            player: player,
+            mapData: mapData,
+            entities: entities
+        };
+        
+        const jsonString = JSON.stringify(saveData, null, 2);
+        const blob = new Blob([jsonString], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `EndlessAbyss_${player.name}_Floor_${currentFloor}F.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        appendChat("系統", "💾 存檔匯出成功！已下載您的冒險 JSON 檔。", "system");
+    }
+
+    function importSave() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        
+        input.onchange = e => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = event => {
+                try {
+                    const data = JSON.parse(event.target.result);
+                    
+                    if (!data.player || typeof data.currentFloor === 'undefined' || !data.mapData || !data.entities) {
+                        throw new Error("無效的存檔格式！");
+                    }
+                    
+                    player = data.player;
+                    currentFloor = data.currentFloor;
+                    mapData = data.mapData;
+                    entities = data.entities;
+                    isBossAlive = (typeof data.isBossAlive !== 'undefined') ? data.isBossAlive : false;
+                    
+                    if (!player.petCollection) {
+                        player.petCollection = ['ruby'];
+                    }
+                    if (!player.activePet) {
+                        player.activePet = 'ruby';
+                    }
+                    
+                    if (player.hp > 0) {
+                        gameState = 'playing';
+                        messageOverlay.style.display = 'none';
+                    }
+                    
+                    updateCamera();
+                    updateCharPanel();
+                    
+                    appendChat("系統", `📥 存檔導入成功！歡迎回到第 ${currentFloor} 層，冒險者 【${player.name}】！`, "system");
+                } catch (err) {
+                    alert("⚠️ 讀取存檔失敗：" + err.message);
+                }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    }
+
+    function initGame() {
+        player.inventory.push({ id: 'init-w', name: '[0F] 精靈初學者木弓', type: 'weapon', tier: 0, atk: 4, def: 0, price: 10 });
+        appendChat("系統", `無盡深淵隨機迷宮已載入！擊殺每層的巨型 Boss 🦁 才能通關！`, "system");
+        loadFloor(0);
+        gameLoop();
+    }
+
+    initGame();
+</script>
+</body>
+</html>
